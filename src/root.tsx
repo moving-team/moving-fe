@@ -81,8 +81,12 @@ const router = createBrowserRouter([
       // 새로 추가된 "내 견적 관리" 관련 경로들
       {
         path: 'costHandler',
-        element: <span>내 견적 관리</span>, // 메인 페이지
+        element: <span>내 견적 관리</span>,
         children: [
+          {
+            index: true, // 기본 경로 설정
+            element: <span>대기 중인 견적</span>, // 기본으로 "대기 중인 견적" 페이지를 렌더링
+          },
           {
             path: 'waiting',
             element: <span>대기 중인 견적</span>, // 대기 중인 견적 페이지
@@ -144,4 +148,3 @@ const router = createBrowserRouter([
 ]);
 
 export default router;
-
