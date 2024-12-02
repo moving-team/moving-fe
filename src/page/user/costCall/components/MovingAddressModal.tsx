@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import cn from 'classnames';
-import { fetchAddress } from '../../../lib/api/kakao';
+import { useMovingAddressList } from '../../../../lib/api/kakao';
 import style from './MovingAddressModal.module.css';
-import icSearchLarge from '../../../assets/icons/ic_search_large.svg';
-import icXCircleLarge from '../../../assets/icons/ic_x_circle_large.svg';
-import icXLarge from '../../../assets/icons/ic_x_large.svg';
-import Button from '../../../components/btn/Button';
+import icSearchLarge from '../../../../assets/icons/ic_search_large.svg';
+import icXCircleLarge from '../../../../assets/icons/ic_x_circle_large.svg';
+import icXLarge from '../../../../assets/icons/ic_x_large.svg';
+import Button from '../../../../components/btn/Button';
+import Pagination from '../../../../components/common/Pagination';
 
-interface AddressValues {
+export interface AddressValues {
   road_address: {
     zone_no: string;
     address_name: string;
@@ -18,11 +19,11 @@ interface AddressValues {
   };
 }
 
-// interface MetaValues {
-//   is_end: boolean;
-//   pageable_count: number;
-//   total_count: number;
-// }
+export interface MetaValues {
+  is_end: boolean;
+  pageable_count: number;
+  total_count: number;
+}
 
 interface ModalProps {
   setValue(name: 'arrival' | 'departure', value: string | null): void;
@@ -31,30 +32,31 @@ interface ModalProps {
 }
 
 export default function AddressModal({ setValue, type, onClose }: ModalProps) {
-  const [addressList, setAddressList] = useState<AddressValues[]>([]);
-  // const [meta, setMeta] = useState<MetaValues>();
   const [address, setAddress] = useState('');
+  const [inputValue, setInputValue] = useState('');
   const [index, setIndex] = useState<null | number>(null);
-  // const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectAddress, setSelectAddress] = useState('');
 
   const inputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAddress(e.target.value);
+    setInputValue(e.target.value);
   };
+
+  const { addressList, meta, isLoading, error } = useMovingAddressList(
+    address,
+    currentPage,
+  );
 
   const inputOnKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      const fetchData = async () => {
-        const { addressList } = await fetchAddress(address);
-        setAddressList(addressList);
-        // setMeta(meta);
-        setIndex(null);
-      };
-      fetchData();
+      setCurrentPage(1);
+      setIndex(null);
+      setAddress(inputValue);
     }
   };
 
   const handleClick = (i: number, selectedAddress: AddressValues) => {
-    setAddress(selectedAddress.road_address.address_name);
+    setSelectAddress(selectedAddress.road_address.address_name);
     setIndex(i);
   };
 
@@ -69,7 +71,6 @@ export default function AddressModal({ setValue, type, onClose }: ModalProps) {
   const handleInputCancel = () => {
     setAddress('');
     setIndex(null);
-    setAddressList([]);
   };
 
   return (
@@ -95,7 +96,7 @@ export default function AddressModal({ setValue, type, onClose }: ModalProps) {
             className={style.searchInputField}
             name='address'
             placeholder='주소를 입력해 주세요'
-            value={address}
+            value={inputValue}
             onChange={inputChange}
             onKeyDown={inputOnKeyDown}
           />
@@ -138,10 +139,27 @@ export default function AddressModal({ setValue, type, onClose }: ModalProps) {
             </div>
           </li>
         ))}
+        {(meta?.total_count ?? 0) > 1 && (
+          <div className={style.pagination}>
+            <Pagination
+              onPageChange={setCurrentPage}
+              currentPage={currentPage}
+              itemsTotalCount={meta?.total_count}
+            />
+          </div>
+        )}
+        {isLoading && <div>로딩 중입니다</div>}
+        {error && (
+          <div>
+            {error instanceof Error
+              ? error.message
+              : '예기치 못한 오류가 발생했습니다.'}
+          </div>
+        )}
 
         <Button
           className={cn(style.submitButton, {
-            [style.submitEmptyListButton]: addressList.length === 0,
+            [style.submitEmptyListButton]: addressList?.length === 0,
           })}
           text='선택완료'
           btnStyle='solid640pxBlue300'
@@ -149,7 +167,7 @@ export default function AddressModal({ setValue, type, onClose }: ModalProps) {
           onClick={() =>
             handleSelectClick(
               type === 'departure' ? 'departure' : 'arrival',
-              address,
+              selectAddress,
             )
           }
         />
