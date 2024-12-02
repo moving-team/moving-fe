@@ -78,6 +78,29 @@ const router = createBrowserRouter([
         path: 'resister',
         element: <UserResisterPage />,
       },
+      // 새로 추가된 "내 견적 관리" 관련 경로들
+      {
+        path: 'costHandler',
+        element: <span>내 견적 관리</span>, // 메인 페이지
+        children: [
+          {
+            path: 'waiting',
+            element: <span>대기 중인 견적</span>, // 대기 중인 견적 페이지
+          },
+          {
+            path: 'waiting/:id',
+            element: <span>대기 중인 견적 상세</span>, // 대기 중인 견적 상세 페이지
+          },
+          {
+            path: 'received',
+            element: <span>받았던 견적</span>, // 받았던 견적 페이지
+          },
+          {
+            path: 'received/:id',
+            element: <span>받았던 견적 상세</span>, // 받았던 견적 상세 페이지
+          },
+        ],
+      },
     ],
   },
   {
@@ -121,3 +144,4 @@ const router = createBrowserRouter([
 ]);
 
 export default router;
+
